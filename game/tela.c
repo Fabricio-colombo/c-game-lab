@@ -1,24 +1,31 @@
 #include "tela.h"
-#include <objidl.h> 
+#include <objidl.h>
 #pragma comment(lib, "gdiplus.lib")
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    static GpBitmap* bitmap = NULL;
+    static GpBitmap* background = NULL; // Fundo (wallgray.png)
+    static GpBitmap* ground = NULL;     // Chão (chao.jpg)
     static ULONG_PTR gdiplusToken;
 
     switch (uMsg) {
         case WM_CREATE: {
             GdiplusStartupInput gdiplusStartupInput;
             GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
-            if (GdipCreateBitmapFromFile(L"img\\textures-img\\wallgray.png", &bitmap) != Ok) {
+            // Carregar fundo
+            if (GdipCreateBitmapFromFile(L"img\\textures-img\\wallgray.png", &background) != Ok) {
                 MessageBoxW(NULL, L"Erro ao carregar wallgray.png!", L"Erro", MB_OK | MB_ICONERROR);
-                bitmap = NULL;
+                background = NULL;
+            }
+            // Carregar chão
+            if (GdipCreateBitmapFromFile(L"img\\textures-img\\waterchao.jpg", &ground) != Ok) {
+                MessageBoxW(NULL, L"Erro ao carregar chao.jpg!", L"Erro", MB_OK | MB_ICONERROR);
+                ground = NULL;
             }
             return 0;
         }
         case WM_DESTROY: {
-            if (bitmap) GdipDisposeImage((GpImage*)bitmap);
+            if (background) GdipDisposeImage((GpImage*)background);
+            if (ground) GdipDisposeImage((GpImage*)ground);
             GdiplusShutdown(gdiplusToken);
             PostQuitMessage(0);
             return 0;
@@ -26,13 +33,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
-            if (bitmap) {
+            if (background || ground) {
                 GpGraphics* graphics;
                 GdipCreateFromHDC(hdc, &graphics);
-                GdipDrawImageRectI(graphics, (GpImage*)bitmap, 0, 0, 1400, 600); // Esticar para 800x600
+                // Desenhar fundo
+                if (background) {
+                    GdipDrawImageRectI(graphics, (GpImage*)background, 0, 0, 1400, 600);
+                }
+                // Desenhar chão (na parte inferior, altura 100px)
+                if (ground) {
+                    GdipDrawImageRectI(graphics, (GpImage*)ground, 0, 400, 1400, 200);
+                }
                 GdipDeleteGraphics(graphics);
             } else {
-                // Fallback: fundo branco e retângulo vermelho
                 FillRect(hdc, &ps.rcPaint, CreateSolidBrush(RGB(255, 255, 255)));
                 HBRUSH redBrush = CreateSolidBrush(RGB(255, 0, 0));
                 RECT rect = {100, 100, 150, 150};
@@ -47,7 +60,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 }
 
 HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
-    // Definir a classe da janela
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = hInstance;
@@ -55,15 +67,14 @@ HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
     wc.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_ARROW));
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 
-    // Registrar a classe da janela
     if (!RegisterClassW(&wc)) {
         MessageBoxW(NULL, L"Erro ao registrar a classe da janela!", L"Erro", MB_OK | MB_ICONERROR);
         return NULL;
     }
-
-    // Criar a janela
+    int xPos = (GetSystemMetrics(SM_CXSCREEN) - 1400) / 2;
+    int yPos = (GetSystemMetrics(SM_CYSCREEN) - 600) / 2;
     HWND hwnd = CreateWindowExW(
-        0, L"JogoWin32", L"Meu Jogo", WS_OVERLAPPEDWINDOW,
+        0, L"JogoWin32", L"Meu Jogo", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT, 1400, 600,
         NULL, NULL, hInstance, NULL
     );
@@ -73,7 +84,6 @@ HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
         return NULL;
     }
 
-    // Exibir a janela
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 

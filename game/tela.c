@@ -1,19 +1,16 @@
 #include "tela.h"
 
-// Função de callback para processar mensagens da janela
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case WM_DESTROY:
-            PostQuitMessage(0); // Envia mensagem para fechar o programa
+            PostQuitMessage(0);
             return 0;
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
-            // Desenhar fundo branco
             FillRect(hdc, &ps.rcPaint, CreateSolidBrush(RGB(255, 255, 255)));
-            // Desenhar retângulo vermelho
             HBRUSH redBrush = CreateSolidBrush(RGB(255, 0, 0));
-            RECT rect = {100, 100, 150, 150}; // x, y, x+largura, y+altura
+            RECT rect = {100, 100, 150, 150};
             FillRect(hdc, &rect, redBrush);
             DeleteObject(redBrush);
             EndPaint(hwnd, &ps);
@@ -24,7 +21,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 }
 
 HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
-    // Definir a classe da janela
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = hInstance;
@@ -32,13 +28,11 @@ HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
     wc.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_ARROW));
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 
-    // Registrar a classe da janela
     if (!RegisterClassW(&wc)) {
         MessageBoxW(NULL, L"Erro ao registrar a classe da janela!", L"Erro", MB_OK | MB_ICONERROR);
         return NULL;
     }
 
-    // Criar a janela
     HWND hwnd = CreateWindowExW(
         0, L"JogoWin32", L"Meu Jogo", WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
@@ -50,7 +44,6 @@ HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
         return NULL;
     }
 
-    // Exibir a janela
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 

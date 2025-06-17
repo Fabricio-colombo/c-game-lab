@@ -5,6 +5,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!hwnd) {
         return 1;
     }
-
     return ExecutarLoopMensagens();
 }

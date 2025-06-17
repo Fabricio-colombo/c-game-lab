@@ -1,19 +1,16 @@
 #include "tela.h"
-#include <objidl.h> // Para interfaces COM (usado pelo GDI+)
+#include <objidl.h> 
 #pragma comment(lib, "gdiplus.lib")
 
-// Função de callback para processar mensagens da janela
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static GpBitmap* bitmap = NULL;
     static ULONG_PTR gdiplusToken;
 
     switch (uMsg) {
         case WM_CREATE: {
-            // Inicializar GDI+
             GdiplusStartupInput gdiplusStartupInput;
             GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-            // Carregar a imagem PNG
             if (GdipCreateBitmapFromFile(L"img\\textures-img\\wallgray.png", &bitmap) != Ok) {
                 MessageBoxW(NULL, L"Erro ao carregar wallgray.png!", L"Erro", MB_OK | MB_ICONERROR);
                 bitmap = NULL;
@@ -21,7 +18,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             return 0;
         }
         case WM_DESTROY: {
-            // Liberar recursos
             if (bitmap) GdipDisposeImage((GpImage*)bitmap);
             GdiplusShutdown(gdiplusToken);
             PostQuitMessage(0);
@@ -33,7 +29,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             if (bitmap) {
                 GpGraphics* graphics;
                 GdipCreateFromHDC(hdc, &graphics);
-                GdipDrawImageRectI(graphics, (GpImage*)bitmap, 0, 0, 800, 600); // Esticar para 800x600
+                GdipDrawImageRectI(graphics, (GpImage*)bitmap, 0, 0, 1400, 600); // Esticar para 800x600
                 GdipDeleteGraphics(graphics);
             } else {
                 // Fallback: fundo branco e retângulo vermelho
@@ -68,7 +64,7 @@ HWND InicializarTela(HINSTANCE hInstance, int nCmdShow) {
     // Criar a janela
     HWND hwnd = CreateWindowExW(
         0, L"JogoWin32", L"Meu Jogo", WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+        CW_USEDEFAULT, CW_USEDEFAULT, 1400, 600,
         NULL, NULL, hInstance, NULL
     );
 

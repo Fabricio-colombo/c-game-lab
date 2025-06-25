@@ -35,25 +35,24 @@ def init_game():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
 
-    hero_img_path = os.path.join(BASE_DIR, "img", "hero-img", "hero-run1.png")
-    hero_img = load_image(hero_img_path)  # tamanho original
+    hero_run_img = load_image(os.path.join(BASE_DIR, "img", "hero-img", "hero-run1.png"))
+    hero_down_img = load_image(os.path.join(BASE_DIR, "img", "hero-img", "hero-down.png"))
+    hero_up_img = load_image(os.path.join(BASE_DIR, "img", "hero-img", "hero-up.png"))
 
-    obstacle_img_path = os.path.join(BASE_DIR, "img", "obstacle-img", "2.png")
-    obstacle_img = load_image(obstacle_img_path, divisor=12)  # reduzido
-
+    obstacle_img = load_image(os.path.join(BASE_DIR, "img", "obstacle-img", "2.png"), divisor=12)
     bg_img = load_background()
 
-    hero_rect = hero_img.get_rect()
+    hero_rect = hero_run_img.get_rect()
     hero_rect.x = 50
-    hero_rect.y = HEIGHT - hero_rect.height - 50
+    hero_rect.y = HEIGHT - hero_run_img.get_height() - 50
 
     flying_enemies = FlyingEnemies(WIDTH, HEIGHT)
     terrestrial_enemies = TerrestrialEnemies(WIDTH, HEIGHT)
 
-    return screen, clock, font, hero_img, hero_rect, obstacle_img, bg_img, flying_enemies, terrestrial_enemies
+    return screen, clock, font, hero_run_img, hero_down_img, hero_up_img, hero_rect, obstacle_img, bg_img, flying_enemies, terrestrial_enemies
 
 def handle_hero_movement(hero_rect, y_velocity, on_ground, keys):
-    if keys[pygame.K_SPACE] and on_ground:
+    if keys[pygame.K_UP] and on_ground:
         y_velocity = -15
         on_ground = False
     y_velocity += GRAVITY
@@ -77,8 +76,7 @@ def spawn_obstacle(obstacles, obstacle_img, spawn_timer):
 def move_obstacles(obstacles):
     for obstacle in obstacles:
         obstacle.x -= 8
-    obstacles = [o for o in obstacles if o.x + o.width > 0]
-    return obstacles
+    return [o for o in obstacles if o.x + o.width > 0]
 
 def check_collision(hero_rect, obstacles):
     for obstacle in obstacles:
@@ -89,52 +87,74 @@ def check_collision(hero_rect, obstacles):
 def draw_background(screen, bg_img):
     screen.blit(bg_img, (0, 0))
 
-def draw(screen, bg_img, hero_img, hero_rect, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies):
+def draw(screen, bg_img, current_hero_img, hero_rect, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies, game_active):
     draw_background(screen, bg_img)
-    screen.blit(hero_img, hero_rect)
+    screen.blit(current_hero_img, hero_rect)
     for obstacle in obstacles:
         screen.blit(obstacle_img, obstacle)
     flying_enemies.draw(screen)
     terrestrial_enemies.draw(screen)
-    score_text = font.render(f"Score: {score // 10}", True, BLACK)
-    screen.blit(score_text, (10, 10))
+
+    if game_active:
+        score_text = font.render(f"Score: {score // 10}", True, BLACK)
+        screen.blit(score_text, (10, 10))
+    else:
+        msg = font.render("Game Over! Press SPACE to restart.", True, BLACK)
+        screen.blit(msg, (WIDTH // 2 - msg.get_width() // 2, HEIGHT // 2 - msg.get_height() // 2))
     pygame.display.update()
 
 def main():
-    screen, clock, font, hero_img, hero_rect, obstacle_img, bg_img, flying_enemies, terrestrial_enemies = init_game()
+    screen, clock, font, hero_run_img, hero_down_img, hero_up_img, hero_rect, obstacle_img, bg_img, flying_enemies, terrestrial_enemies = init_game()
     y_velocity = 0
     on_ground = True
     obstacles = []
     spawn_timer = 0
     score = 0
-    run = True
+    game_active = True
+    current_hero_img = hero_run_img
 
-    while run:
+    while True:
         clock.tick(60)
+        keys = pygame.key.get_pressed()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                pygame.quit()
+                return
 
-        keys = pygame.key.get_pressed()
-        hero_rect, y_velocity, on_ground = handle_hero_movement(hero_rect, y_velocity, on_ground, keys)
-        obstacles, spawn_timer = spawn_obstacle(obstacles, obstacle_img, spawn_timer)
-        obstacles = move_obstacles(obstacles)
+        if game_active:
+            if not on_ground:
+                current_hero_img = hero_up_img
+            elif keys[pygame.K_DOWN]:
+                current_hero_img = hero_down_img
+            else:
+                current_hero_img = hero_run_img
 
-        flying_enemies.spawn_enemy()
-        flying_enemies.move_enemies()
+            hero_rect.width = current_hero_img.get_width()
+            hero_rect.height = current_hero_img.get_height()
+            hero_rect.y = min(hero_rect.y, HEIGHT - hero_rect.height - 50)
 
-        terrestrial_enemies.spawn_enemy()
-        terrestrial_enemies.move_enemies()
+            hero_rect, y_velocity, on_ground = handle_hero_movement(hero_rect, y_velocity, on_ground, keys)
+            obstacles, spawn_timer = spawn_obstacle(obstacles, obstacle_img, spawn_timer)
+            obstacles = move_obstacles(obstacles)
 
-        if (check_collision(hero_rect, obstacles) or
-            flying_enemies.check_collision(hero_rect) or
-            terrestrial_enemies.check_collision(hero_rect)):
-            run = False
+            flying_enemies.spawn_enemy()
+            flying_enemies.move_enemies()
+            terrestrial_enemies.spawn_enemy()
+            terrestrial_enemies.move_enemies()
 
-        score += 1
-        draw(screen, bg_img, hero_img, hero_rect, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies)
+            if (check_collision(hero_rect, obstacles) or
+                flying_enemies.check_collision(hero_rect) or
+                terrestrial_enemies.check_collision(hero_rect)):
+                game_active = False
 
-    pygame.quit()
+            score += 1
+
+        elif not game_active and keys[pygame.K_SPACE]:
+            main()
+            return
+
+        draw(screen, bg_img, current_hero_img, hero_rect, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies, game_active)
 
 if __name__ == "__main__":
     main()

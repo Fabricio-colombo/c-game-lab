@@ -65,7 +65,7 @@ def handle_hero_movement(hero_rect, y_velocity, on_ground, keys):
 
 def spawn_obstacle(obstacles, obstacle_img, spawn_timer):
     spawn_timer += 1
-    if spawn_timer > 60:
+    if spawn_timer > 166:
         obstacle = obstacle_img.get_rect()
         obstacle.x = WIDTH
         obstacle.y = HEIGHT - obstacle.height - 50
@@ -78,16 +78,16 @@ def move_obstacles(obstacles):
         obstacle.x -= 8
     return [o for o in obstacles if o.x + o.width > 0]
 
-def check_collision(hero_rect, obstacles):
+def check_collision(hero_hitbox, obstacles):
     for obstacle in obstacles:
-        if hero_rect.colliderect(obstacle):
+        if hero_hitbox.colliderect(obstacle):
             return True
     return False
 
 def draw_background(screen, bg_img):
     screen.blit(bg_img, (0, 0))
 
-def draw(screen, bg_img, current_hero_img, hero_rect, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies, game_active):
+def draw(screen, bg_img, current_hero_img, hero_rect, hero_hitbox, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies, game_active):
     draw_background(screen, bg_img)
     screen.blit(current_hero_img, hero_rect)
     for obstacle in obstacles:
@@ -143,9 +143,11 @@ def main():
             terrestrial_enemies.spawn_enemy()
             terrestrial_enemies.move_enemies()
 
-            if (check_collision(hero_rect, obstacles) or
-                flying_enemies.check_collision(hero_rect) or
-                terrestrial_enemies.check_collision(hero_rect)):
+            hero_hitbox = hero_rect.inflate(-hero_rect.width * 0.4, -hero_rect.height * 0.2)
+
+            if (check_collision(hero_hitbox, obstacles) or
+                flying_enemies.check_collision(hero_hitbox) or
+                terrestrial_enemies.check_collision(hero_hitbox)):
                 game_active = False
 
             score += 1
@@ -154,7 +156,8 @@ def main():
             main()
             return
 
-        draw(screen, bg_img, current_hero_img, hero_rect, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies, game_active)
+        hero_hitbox = hero_rect.inflate(-hero_rect.width * 0.4, -hero_rect.height * 0.2)
+        draw(screen, bg_img, current_hero_img, hero_rect, hero_hitbox, obstacle_img, obstacles, font, score, flying_enemies, terrestrial_enemies, game_active)
 
 if __name__ == "__main__":
     main()

@@ -16,7 +16,7 @@ class TerrestrialEnemies:
 
     def spawn_enemy(self):
         self.spawn_timer += 1
-        if self.spawn_timer > 900:
+        if self.spawn_timer > 746:
             rect = self.enemy_img.get_rect()
             rect.x = self.screen_width
             rect.y = self.screen_height - rect.height - 50

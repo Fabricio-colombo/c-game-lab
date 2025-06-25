@@ -24,7 +24,7 @@ class FlyingEnemies:
 
     def spawn_enemy(self):
         self.spawn_timer += 1
-        if self.spawn_timer > 120:
+        if self.spawn_timer > 479:
             img = random.choice(self.enemy_imgs)
             rect = img.get_rect()
             rect.x = self.screen_width
